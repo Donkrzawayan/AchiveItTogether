@@ -13,4 +13,5 @@ class Base(AsyncAttrs, DeclarativeBase):
 
 async def init_db():
     async with engine.begin() as conn:
+        import database.models
         await conn.run_sync(Base.metadata.create_all)

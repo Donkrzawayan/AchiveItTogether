@@ -23,13 +23,20 @@ class AchieveBot(commands.Bot):
         await init_db()
         logger.info("--- Database ready ---")
 
-        # await self.load_extension("cogs.goals")
+        await self.load_extension("cogs.core")
 
         await self.tree.sync()
 
     async def on_ready(self):
         logger.info(f"Logged in as {self.user} (ID: {self.user.id})")
         logger.info("------")
+
+    async def on_command_error(self, ctx: commands.Context, error: commands.CommandError):
+        if isinstance(error, commands.CommandNotFound):
+            # Ignores CommandNotFound because commands are dynamically handled in on_message.
+            return
+        
+        await super().on_command_error(ctx, error)
 
 
 async def main():
