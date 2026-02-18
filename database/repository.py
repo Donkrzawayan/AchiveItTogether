@@ -1,4 +1,4 @@
-from typing import Optional
+from typing import Optional, Sequence
 from sqlalchemy import select, func, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -34,6 +34,7 @@ class GoalRepository:
         """
         goal = Goal(guild_id=guild_id, creator_id=creator_id, name=name, channel_id=channel_id)
         self.session.add(goal)
+        await self.session.flush()
         return goal
 
     async def add_progress(self, goal_id: int, user_id: int, amount: int) -> Progress:
@@ -58,3 +59,26 @@ class GoalRepository:
         self.session.add(milestone)
         await self.session.flush()
         return milestone
+
+    async def get_newly_reached_milestones(self, goal_id: int, old_total: int, new_total: int) -> Sequence[Milestone]:
+        stmt = select(Milestone).where(
+            (Milestone.goal_id == goal_id) & (Milestone.threshold > old_total) & (Milestone.threshold <= new_total)
+        )
+        result = await self.session.execute(stmt)
+        return result.scalars().all()
+
+    async def get_user_progress(self, goal_id: int, user_id: int) -> int:
+        stmt = select(func.sum(Progress.amount)).where((Progress.goal_id == goal_id) & (Progress.user_id == user_id))
+        result = await self.session.execute(stmt)
+        total = result.scalar()
+        return total if total else 0
+
+    async def get_next_milestone(self, goal_id: int, current_total: int) -> Optional[Milestone]:
+        stmt = (
+            select(Milestone)
+            .where((Milestone.goal_id == goal_id) & (Milestone.threshold > current_total))
+            .order_by(Milestone.threshold.asc())
+            .limit(1)
+        )
+        result = await self.session.execute(stmt)
+        return result.scalar_one_or_none()
