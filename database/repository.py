@@ -2,7 +2,7 @@ from typing import Optional
 from sqlalchemy import select, func, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from database.models import User, Goal, Progress
+from database.models import Milestone, User, Goal, Progress
 
 
 class GoalRepository:
@@ -51,3 +51,10 @@ class GoalRepository:
     async def update_goal_channel(self, goal_id: int, channel_id: Optional[int]) -> None:
         stmt = update(Goal).where(Goal.id == goal_id).values(channel_id=channel_id)
         await self.session.execute(stmt)
+
+    async def add_milestone(self, goal_id: int, name: str, threshold: int) -> Milestone:
+        """Adds a new milestone definition to a goal."""
+        milestone = Milestone(goal_id=goal_id, name=name, threshold=threshold)
+        self.session.add(milestone)
+        await self.session.flush()
+        return milestone
