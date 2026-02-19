@@ -56,13 +56,20 @@ class Notifications(commands.Cog):
             logger.warning(f"User {user_id} not found.")
             return None
 
-    async def _send_reminder_dm(self, user: discord.User, goal_name: str):
+    async def _send_reminder_dm(self, user: discord.User, goal_name: str, channel_id: int | None):
+        description = f"Hey! Remember to work on your goal: **{goal_name}** today!"
+        if channel_id:
+            # '-#' is a Discord markdown prefix for a subtext
+            description += f"\n\n-# Use command `!{goal_name} <amount>` in <#{channel_id}> to track progress."
+
         embed = discord.Embed(
             title="🔔 Goal Reminder!",
-            description=f"Hey! Remember to work on your goal: **{goal_name}** today!",
+            description=description,
             color=discord.Color.blue(),
         )
-        embed.set_footer(text=f"Use command !{goal_name} <amount> to track progress.")
+        if not channel_id:
+            embed.set_footer(text=f"Use command !{goal_name} <amount> to track progress.")
+
         await user.send(embed=embed)
 
     async def _process_single_reminder(self, repo, reminder, today_date):
@@ -72,7 +79,7 @@ class Notifications(commands.Cog):
                 return
 
             try:
-                await self._send_reminder_dm(user, reminder.goal.name)
+                await self._send_reminder_dm(user, reminder.goal.name, reminder.goal.channel_id)
             except discord.Forbidden:
                 logger.warning(f"Cannot send DM to user {reminder.user_id} (DMs closed).")
                 return

@@ -36,7 +36,7 @@ class TimeModal(ui.Modal, title="Set Reminder Time"):
             self.time_input.default = default_time.strftime("%H:%M")
 
     async def on_submit(self, interaction: discord.Interaction):
-        time_str = self.time_input.value.strip()
+        time_str = self.time_input.value.strip().replace('.', ':')
 
         try:
             parsed_time = datetime.strptime(time_str, "%H:%M").time()
@@ -46,14 +46,16 @@ class TimeModal(ui.Modal, title="Set Reminder Time"):
             )
             return
 
-        await interaction.response.defer(ephemeral=True)
+        await interaction.response.defer()
 
         async with async_session_factory() as session:
             async with session.begin():
                 repo = GoalRepository(session)
                 goal = await repo.get_goal_by_name(self.guild_id, self.goal_name)
                 if not goal:
-                    await interaction.followup.send(f"Goal **{self.goal_name}** does not exist.", ephemeral=True)
+                    await interaction.edit_original_response(
+                        content=f"Goal **{self.goal_name}** does not exist.", view=None
+                    )
                     return
 
                 await repo.set_reminder(
@@ -61,9 +63,9 @@ class TimeModal(ui.Modal, title="Set Reminder Time"):
                 )
 
         readable_days = get_readable_days(self.selected_days)
-        await interaction.followup.send(
-            f"Reminder set for **{self.goal_name}**!\n📅 Days: **{readable_days}**\n🕒 Time: **{time_str}**",
-            ephemeral=True,
+        await interaction.edit_original_response(
+            content=f"Reminder set for **{self.goal_name}**!\n📅 Days: **{readable_days}**\n🕒 Time: **{time_str}**",
+            view=None,
         )
 
 
@@ -120,7 +122,7 @@ class DeleteButton(ui.Button):
         self.goal_name = goal_name
 
     async def callback(self, interaction: discord.Interaction):
-        await interaction.response.defer(ephemeral=True)
+        await interaction.response.defer()
 
         async with async_session_factory() as session:
             async with session.begin():
@@ -130,15 +132,15 @@ class DeleteButton(ui.Button):
                 if goal:
                     deleted = await repo.delete_reminder(goal.id, interaction.user.id)
                     if deleted:
-                        await interaction.followup.send(
-                            f"Reminders for **{self.goal_name}** have been turned off.", ephemeral=True
+                        await interaction.edit_original_response(
+                            content=f"Reminders for **{self.goal_name}** have been turned off.", view=None
                         )
                     else:
-                        await interaction.followup.send(
-                            f"You didn't have any reminders set for **{self.goal_name}**.", ephemeral=True
+                        await interaction.edit_original_response(
+                            content=f"You didn't have any reminders set for **{self.goal_name}**.", view=None
                         )
                 else:
-                    await interaction.followup.send("Goal not found.", ephemeral=True)
+                    await interaction.edit_original_response(content="Goal not found.", view=None)
 
 
 # --- VIEW ---
