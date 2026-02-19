@@ -26,6 +26,7 @@ class AchieveBot(commands.Bot):
         await self.load_extension("cogs.core")
         await self.load_extension("cogs.admin")
         await self.load_extension("cogs.milestones")
+        await self.load_extension("cogs.notifications")
 
         await self.tree.sync()
 

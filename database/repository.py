@@ -1,8 +1,10 @@
+from datetime import date, time
 from typing import Optional, Sequence
-from sqlalchemy import select, func, update
+from sqlalchemy import delete, or_, select, func, update
+from sqlalchemy.orm import selectinload
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from database.models import Milestone, User, Goal, Progress
+from database.models import Milestone, Reminder, User, Goal, Progress
 
 
 class GoalRepository:
@@ -82,3 +84,46 @@ class GoalRepository:
         )
         result = await self.session.execute(stmt)
         return result.scalar_one_or_none()
+
+    async def set_reminder(self, goal_id: int, user_id: int, days: list[int], reminder_time: time) -> Reminder:
+        stmt = select(Reminder).where((Reminder.goal_id == goal_id) & (Reminder.user_id == user_id))
+        result = await self.session.execute(stmt)
+        reminder = result.scalar_one_or_none()
+
+        if reminder:
+            reminder.days_of_week = days
+            reminder.time = reminder_time
+            reminder.last_sent_date = None
+        else:
+            reminder = Reminder(
+                goal_id=goal_id, user_id=user_id, days_of_week=days, time=reminder_time, last_sent_date=None
+            )
+            self.session.add(reminder)
+
+        await self.session.flush()
+        return reminder
+
+    async def get_due_reminders(self, current_day: int, current_time: time, today_date: date) -> Sequence[Reminder]:
+        stmt = select(Reminder).where(
+            Reminder.days_of_week.contains([current_day]),
+            Reminder.time <= current_time,
+            or_(Reminder.last_sent_date != today_date, Reminder.last_sent_date.is_(None)),
+        )
+        stmt = stmt.options(selectinload(Reminder.goal), selectinload(Reminder.user))
+
+        result = await self.session.execute(stmt)
+        return result.scalars().all()
+
+    async def mark_reminder_sent(self, reminder_id: int, sent_date: date) -> None:
+        stmt = update(Reminder).where(Reminder.id == reminder_id).values(last_sent_date=sent_date)
+        await self.session.execute(stmt)
+
+    async def get_reminder(self, goal_id: int, user_id: int) -> Optional[Reminder]:
+        stmt = select(Reminder).where((Reminder.goal_id == goal_id) & (Reminder.user_id == user_id))
+        result = await self.session.execute(stmt)
+        return result.scalar_one_or_none()
+
+    async def delete_reminder(self, goal_id: int, user_id: int) -> bool:
+        stmt = delete(Reminder).where((Reminder.goal_id == goal_id) & (Reminder.user_id == user_id))
+        result = await self.session.execute(stmt)
+        return result.rowcount > 0
