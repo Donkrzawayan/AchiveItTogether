@@ -48,8 +48,8 @@ class MilestoneModal(ui.Modal, title="Add New Milestone"):
                     await interaction.followup.send(f"A milestone named **{name}** already exists for this goal.")
                     return
 
-                self.logger.info(f"Milestone '{name}' ({amount}) added to '{self.goal_name}' by {interaction.user.id}")
-                await interaction.followup.send(f"Milestone **{name}** added to **{self.goal_name}** at **{amount}**!")
+        self.logger.info(f"Milestone '{name}' ({amount}) added to '{self.goal_name}' by {interaction.user.id}")
+        await interaction.followup.send(f"Milestone **{name}** added to **{self.goal_name}** at **{amount}**!")
 
 
 class Milestones(commands.Cog):
@@ -59,6 +59,7 @@ class Milestones(commands.Cog):
 
     @app_commands.command(name="milestone", description="Add a milestone to a goal using a form.")
     @app_commands.describe(goal_name="The name of the goal")
+    @app_commands.guild_only()
     async def add_milestone(self, interaction: discord.Interaction, goal_name: str):
         self.logger.info(f"Command !milestone called by {interaction.user} (Guild: {interaction.guild.id})")
         modal = MilestoneModal(guild_id=interaction.guild_id, goal_name=goal_name.lower().strip())

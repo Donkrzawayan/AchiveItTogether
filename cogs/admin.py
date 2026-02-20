@@ -45,20 +45,22 @@ class Admin(commands.Cog):
 
                 await repo.update_goal_channel(goal.id, channel_id)
 
-                if channel_id:
-                    self.logger.info(f"Goal '{goal.name}' locked to {channel_id} by {interaction.user.id}")
-                    await interaction.followup.send(f"Goal **{goal.name}** is now locked to <#{channel_id}>.")
-                else:
-                    self.logger.info(f"Goal '{goal.name}' unlocked by {interaction.user.id}")
-                    await interaction.followup.send(f"Goal **{goal.name}** is now unlocked and accessible everywhere.")
+        if channel_id:
+            self.logger.info(f"Goal '{goal.name}' locked to {channel_id} by {interaction.user.id}")
+            await interaction.followup.send(f"Goal **{goal.name}** is now locked to <#{channel_id}>.")
+        else:
+            self.logger.info(f"Goal '{goal.name}' unlocked by {interaction.user.id}")
+            await interaction.followup.send(f"Goal **{goal.name}** is now unlocked and accessible everywhere.")
 
     @app_commands.command(name="lock_channel", description="Lock a goal to the current channel.")
     @app_commands.describe(name="The name of the goal to lock")
+    @app_commands.guild_only()
     async def lock_channel(self, interaction: discord.Interaction, name: str):
         await self._update_lock_status(interaction, name, interaction.channel_id)
 
     @app_commands.command(name="unlock_channel", description="Unlock a goal (make it available in all channels).")
     @app_commands.describe(name="The name of the goal to unlock")
+    @app_commands.guild_only()
     async def unlock_channel(self, interaction: discord.Interaction, name: str):
         await self._update_lock_status(interaction, name, None)
 
