@@ -9,6 +9,7 @@ from sqlalchemy.exc import IntegrityError
 from database.base import async_session_factory
 from database.models import Milestone
 from database.repository import GoalRepository
+from services.cache import GoalCacheService
 from utils.helpers import get_or_fetch_user
 
 
@@ -18,6 +19,7 @@ class Core(commands.Cog):
         self.logger = logging.getLogger(__name__)
         # Regex: !<goal> <amount> [@<user>]
         self.progress_pattern = re.compile(r"^!(\w+)\s+(\d+)(?:\s+<@!?(\d+)>)?\s*$")
+        self.cache_service = GoalCacheService(async_session_factory)
 
     def _build_progress_message(
         self,
@@ -118,6 +120,9 @@ class Core(commands.Cog):
                         name=goal_name,
                         channel_id=interaction.channel_id,
                     )
+
+                    self.cache_service.add_goal(interaction.guild_id, goal_name)
+
                     self.logger.info(f"Goal '{goal_name}' created by {interaction.user.id}")
                     await interaction.followup.send(
                         f"Goal **{goal_name}** created!\n-# Locked to <#{interaction.channel_id}>"
@@ -175,6 +180,10 @@ class Core(commands.Cog):
         amount = int(match.group(2))
 
         if amount <= 0:
+            return
+
+        is_valid = await self.cache_service.is_valid_goal(message.guild.id, goal_name)
+        if not is_valid:
             return
 
         target_user = message.author

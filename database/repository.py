@@ -56,6 +56,11 @@ class GoalRepository:
         result = await self.session.execute(stmt)
         return result.scalars().all()
 
+    async def get_goal_names_for_guild(self, guild_id: int) -> set[str]:
+        stmt = select(Goal.name).where(Goal.guild_id == guild_id)
+        result = await self.session.execute(stmt)
+        return set(result.scalars().all())
+
     async def update_goal_channel(self, goal_id: int, channel_id: Optional[int]) -> None:
         stmt = update(Goal).where(Goal.id == goal_id).values(channel_id=channel_id)
         await self.session.execute(stmt)
