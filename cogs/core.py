@@ -7,7 +7,7 @@ from discord.ext import commands
 from sqlalchemy.exc import IntegrityError
 
 from database.base import async_session_factory
-from database.models import Milestone
+from database.models import Goal, Milestone
 from database.repository import GoalRepository
 from services.cache import GoalCacheService
 from utils.helpers import get_or_fetch_user
@@ -17,6 +17,7 @@ class Core(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
         self.logger = logging.getLogger(__name__)
+        self.FORBIDDEN_GOAL_NAMES = ["help"]
         # Regex: !<goal> <amount> [@<user>]
         self.progress_pattern = re.compile(r"^!(\w+)\s+(\d+)(?:\s+<@!?(\d+)>)?\s*$")
         self.cache_service = GoalCacheService(async_session_factory)
@@ -99,6 +100,9 @@ class Core(commands.Cog):
         goal_name = name.lower().strip()
         if not goal_name.isalnum():
             await interaction.response.send_message("Goal name must be alphanumeric.", ephemeral=True)
+            return
+        if goal_name in self.FORBIDDEN_GOAL_NAMES:
+            await interaction.response.send_message(f"Name **{goal_name}** is forbidden for a goal.", ephemeral=True)
             return
 
         await interaction.response.defer()
@@ -211,6 +215,67 @@ class Core(commands.Cog):
         elif status == "success":
             await message.add_reaction("✅")
             await message.reply(response_msg)
+
+    def _build_help_embed(self, active_goals: Sequence[Goal] = []) -> discord.Embed:
+        embed = discord.Embed(
+            title="🛠️ How to use AchieveBot",
+            description="Welcome to the goal tracking bot! Here is how you can manage your progress:",
+            color=discord.Color.green(),
+        )
+
+        if active_goals:
+            goals_lines = []
+            for goal in active_goals:
+                if goal.channel_id:
+                    goals_lines.append(f"- **{goal.name}** (in <#{goal.channel_id}>)\n")
+                else:
+                    goals_lines.append(f"- **{goal.name}**\n")
+
+            goals_text = "".join(goals_lines)
+
+            embed.add_field(name="1. Create a Goal or progress an active one:", value=goals_text, inline=False)
+        else:
+            embed.add_field(
+                name="1. Create a Goal",
+                value="Use `/create <name>` on desired channel to start tracking a new goal (e.g. `/create steps`).\n"
+                "-# This locks the goal to the channel you created it in.",
+                inline=False,
+            )
+
+        embed.add_field(
+            name="2. Log Progress",
+            value="Type `!<goal> <amount> [@<user>]` directly in the chat!\n"
+            "**Example:** `!steps 5000` or for someone else `!books 1 @User`\n"
+            "Or use slash command: `/add <goal> <amount> [@<user>]`.",
+            inline=False,
+        )
+        embed.add_field(
+            name="3. Set Reminders",
+            value="Use `/notify <goal>` to set up recurring DMs so you never forget to update your progress!",
+            inline=False,
+        )
+
+        embed.set_footer(text="Tip: You can use !help or /help to see this message again.")
+        return embed
+
+    async def _process_help_message(self, guild_id):
+        active_goals = []
+        if guild_id:
+            async with async_session_factory() as session:
+                repo = GoalRepository(session)
+                active_goals = await repo.get_active_goals_for_guild(guild_id)
+        return self._build_help_embed(active_goals)
+
+    @app_commands.command(name="help", description="Show the help menu and commands.")
+    async def help_slash(self, interaction: discord.Interaction):
+        embed = await self._process_help_message(interaction.guild_id)
+        await interaction.response.send_message(embed=embed, ephemeral=True)
+
+    @commands.command(name="help")
+    async def help_text(self, ctx: commands.Context):
+        guild_id = ctx.guild.id if ctx.guild else None
+        embed = await self._process_help_message(guild_id)
+        await ctx.reply(embed=embed)
 
 
 async def setup(bot):

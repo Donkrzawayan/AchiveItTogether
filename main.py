@@ -16,7 +16,7 @@ intents.members = True
 
 class AchieveBot(commands.Bot):
     def __init__(self):
-        super().__init__(command_prefix="!", intents=intents)
+        super().__init__(command_prefix="!", intents=intents, help_command=None)
 
     async def setup_hook(self):
         logger.info("--- Database initialization ---")
@@ -38,7 +38,7 @@ class AchieveBot(commands.Bot):
         if isinstance(error, commands.CommandNotFound):
             # Ignores CommandNotFound because commands are dynamically handled in on_message.
             return
-        
+
         await super().on_command_error(ctx, error)
 
 

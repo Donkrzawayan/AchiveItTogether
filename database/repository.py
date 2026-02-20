@@ -1,4 +1,4 @@
-from datetime import date, time
+from datetime import date, datetime, time, timedelta, timezone
 from typing import Optional, Sequence
 from sqlalchemy import delete, or_, select, func, update
 from sqlalchemy.orm import selectinload
@@ -84,6 +84,18 @@ class GoalRepository:
         result = await self.session.execute(stmt)
         total = result.scalar()
         return total if total else 0
+
+    async def get_active_goals_for_guild(self, guild_id: int, days: int = 30) -> Sequence[Goal]:
+        x_days_ago = datetime.now(timezone.utc) - timedelta(days=days)
+        stmt = (
+            select(Goal)
+            .join(Progress, Goal.id == Progress.goal_id)
+            .where(Goal.guild_id == guild_id)
+            .where(Progress.timestamp >= x_days_ago)
+            .group_by(Goal.id)
+        )
+        result = await self.session.execute(stmt)
+        return result.scalars().all()
 
     async def get_next_milestone(self, goal_id: int, current_total: int) -> Optional[Milestone]:
         stmt = (
