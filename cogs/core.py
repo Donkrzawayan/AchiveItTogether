@@ -7,11 +7,10 @@ from discord.ext import commands
 from sqlalchemy.exc import IntegrityError
 
 from database.base import async_session_factory
-from database.models import Goal, Milestone
+from database.models import Milestone
 from database.repository import GoalRepository
 from services.cache import GoalCacheService
 from utils.helpers import get_or_fetch_user
-from utils.i18n import get_text
 
 
 class Core(commands.Cog):
@@ -216,65 +215,6 @@ class Core(commands.Cog):
         elif status == "success":
             await message.add_reaction("✅")
             await message.reply(response_msg)
-
-    def _build_help_embed(self, locale: discord.Locale | None, active_goals: Sequence[Goal] = []) -> discord.Embed:
-        embed = discord.Embed(
-            title=get_text(locale, "help.title"),
-            description=get_text(locale, "help.desc"),
-            color=discord.Color.green(),
-        )
-
-        if active_goals:
-            goals_lines = []
-            for goal in active_goals:
-                if goal.channel_id:
-                    goals_lines.append(f"- **{goal.name}** (in <#{goal.channel_id}>)\n")
-                else:
-                    goals_lines.append(f"- **{goal.name}**\n")
-
-            goals_text = "".join(goals_lines)
-
-            embed.add_field(name=get_text(locale, "help.active_goals"), value=goals_text, inline=False)
-        else:
-            embed.add_field(
-                name=get_text(locale, "help.create_goal"),
-                value=get_text(locale, "help.create_goal_val"),
-                inline=False,
-            )
-
-        embed.add_field(
-            name=get_text(locale, "help.log_progress"),
-            value=get_text(locale, "help.log_progress_val"),
-            inline=False,
-        )
-        embed.add_field(
-            name=get_text(locale, "help.set_reminders"),
-            value=get_text(locale, "help.set_reminders_val"),
-            inline=False,
-        )
-
-        embed.set_footer(text=get_text(locale, "help.footer"))
-        return embed
-
-    async def _process_help_message(self, guild_id, locale: discord.Locale | None = None):
-        active_goals = []
-        if guild_id:
-            async with async_session_factory() as session:
-                repo = GoalRepository(session)
-                active_goals = await repo.get_active_goals_for_guild(guild_id)
-        return self._build_help_embed(locale, active_goals)
-
-    @app_commands.command(name="help", description="Show the help menu and commands.")
-    async def help_slash(self, interaction: discord.Interaction):
-        embed = await self._process_help_message(interaction.guild_id, interaction.locale)
-        await interaction.response.send_message(embed=embed, ephemeral=True)
-
-    @commands.command(name="help")
-    async def help_text(self, ctx: commands.Context):
-        guild_id = ctx.guild.id if ctx.guild else None
-        locale = ctx.guild.preferred_locale if ctx.guild else None
-        embed = await self._process_help_message(guild_id, locale)
-        await ctx.reply(embed=embed)
 
 
 async def setup(bot):
