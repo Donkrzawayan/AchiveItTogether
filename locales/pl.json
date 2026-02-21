@@ -6,10 +6,10 @@
         "create_goal": "1. Stwórz cel",
         "create_goal_val": "Użyj `/create <nazwa>` na wybranym kanale, aby zacząć realizować nowy cel (np. `/create steps`).\n-# Cel zostanie ograniczony do kanału, na którym go utworzono.",
         "log_progress": "2. Dodaj postęp",
-        "log_progress_val": "Wpisz `!<cel> <ilość> [@<użytkownik>]` bezpośrednio na czacie!\n**Przykład:** `!steps 5000` lub dla kogoś `!ksiazki 1 @User`\nAlbo użyj komendy: `/add <cel> <ilość> [@<użytkownik>]`.",
+        "log_progress_val": "Wpisz `$<cel> <ilość> [@<użytkownik>]` bezpośrednio na czacie!\n**Przykład:** `$steps 5000` lub dla kogoś `$ksiazki 1 @User`\nAlbo użyj komendy: `/add <cel> <ilość> [@<użytkownik>]`.",
         "set_reminders": "3. Ustaw przypomnienia",
         "set_reminders_val": "Użyj `/notify <cel>`, aby ustawić cykliczne powiadomienia DM, dzięki czemu nigdy nie zapomnisz o celu!",
-        "footer": "Wskazówka: Użyj !help lub /help, aby zobaczyć tę wiadomość ponownie."
+        "footer": "Wskazówka: Użyj $help lub /help, aby zobaczyć tę wiadomość ponownie."
     },
     "notify": {
         "days_map": [

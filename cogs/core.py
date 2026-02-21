@@ -19,8 +19,8 @@ class Core(commands.Cog):
         self.bot = bot
         self.logger = logging.getLogger(__name__)
         self.FORBIDDEN_GOAL_NAMES = ["help"]
-        # Regex: !<goal> <amount> [@<user>]
-        self.progress_pattern = re.compile(r"^!(\w+)\s+(\d+)(?:\s+<@!?(\d+)>)?\s*$")
+        # Regex: $<goal> <amount> [@<user>]
+        self.progress_pattern = re.compile(r"^\$(\w+)\s+(\d+)(?:\s+<@!?(\d+)>)?\s*$")
         self.cache_service = GoalCacheService(async_session_factory)
 
     def _build_progress_message(
@@ -173,7 +173,7 @@ class Core(commands.Cog):
 
     @commands.Cog.listener()
     async def on_message(self, message: discord.Message):
-        """Listens for messages like '!steps 1000' or '!steps 1000 @user' and updates progress."""
+        """Listens for messages like '$steps 1000' or '$steps 1000 @user' and updates progress."""
         if message.author.bot or message.guild is None:
             return
 
@@ -198,7 +198,7 @@ class Core(commands.Cog):
             target_user = fetched_user if fetched_user else message.author
 
         self.logger.info(
-            f"!{goal_name} called by {message.author.name} for {target_user.name} (Guild: {message.guild.id}, channel: {message.channel.name})"
+            f"${goal_name} called by {message.author.name} for {target_user.name} (Guild: {message.guild.id}, channel: {message.channel.name})"
         )
 
         status, response_msg = await self._process_add_progress(
@@ -210,9 +210,9 @@ class Core(commands.Cog):
         )
 
         if status == "not_found":
-            self.logger.info(f"Non existing !{goal_name} called by {message.author}")
+            self.logger.info(f"Non existing ${goal_name} called by {message.author}")
         elif status == "wrong_channel":
-            self.logger.info(f"Wrong channel !{goal_name} called by {message.author}")
+            self.logger.info(f"Wrong channel ${goal_name} called by {message.author}")
         elif status == "success":
             await message.add_reaction("✅")
             await message.reply(response_msg)

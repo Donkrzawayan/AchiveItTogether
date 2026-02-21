@@ -6,10 +6,10 @@
         "create_goal": "1. Create a Goal",
         "create_goal_val": "Use `/create <name>` on desired channel to start tracking a new goal (e.g. `/create steps`).\n-# This locks the goal to the channel you created it in.",
         "log_progress": "2. Log Progress",
-        "log_progress_val": "Type `!<goal> <amount> [@<user>]` directly in the chat!\n**Example:** `!steps 5000` or for someone else `!books 1 @User`\nOr use slash command: `/add <goal> <amount> [@<user>]`.",
+        "log_progress_val": "Type `$<goal> <amount> [@<user>]` directly in the chat!\n**Example:** `$steps 5000` or for someone else `$books 1 @User`\nOr use slash command: `/add <goal> <amount> [@<user>]`.",
         "set_reminders": "3. Set Reminders",
         "set_reminders_val": "Use `/notify <goal>` to set up recurring DMs so you never forget to update your progress!",
-        "footer": "Tip: You can use !help or /help to see this message again."
+        "footer": "Tip: You can use $help or /help to see this message again."
     },
     "notify": {
         "days_map": [

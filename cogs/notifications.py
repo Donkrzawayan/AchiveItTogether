@@ -68,7 +68,7 @@ class Notifications(commands.Cog):
         description = f"Hey! Remember to work on your goal: **{goal_name}** today!"
         if channel_id:
             # '-#' is a Discord markdown prefix for a subtext
-            description += f"\n\n-# Use command `!{goal_name} <amount>` in <#{channel_id}> to track progress."
+            description += f"\n\n-# Use command `${goal_name} <amount>` in <#{channel_id}> to track progress."
 
         embed = discord.Embed(
             title="🔔 Goal Reminder!",
@@ -76,7 +76,7 @@ class Notifications(commands.Cog):
             color=discord.Color.blue(),
         )
         if not channel_id:
-            embed.set_footer(text=f"Use command !{goal_name} <amount> to track progress.")
+            embed.set_footer(text=f"Use command ${goal_name} <amount> to track progress.")
 
         await user.send(embed=embed)
 

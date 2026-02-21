@@ -16,7 +16,7 @@ intents.members = True
 
 class AchieveBot(commands.Bot):
     def __init__(self):
-        super().__init__(command_prefix="!", intents=intents, help_command=None)
+        super().__init__(command_prefix="$", intents=intents, help_command=None)
 
     async def setup_hook(self):
         logger.info("--- Database initialization ---")
